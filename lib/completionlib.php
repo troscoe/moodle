@@ -567,13 +567,13 @@ class completion_info {
 
         } else {
             // Automatic tracking; get new state
-            $newstate = $this->internal_get_state($cm, $userid, $current);
+            $new = $this->internal_get_state($cm, $userid, $current);
         }
 
         // If changed, update
-        if ($newstate != $current->completionstate) {
-            $current->completionstate = $newstate;
-            $current->timemodified    = time();
+        if ($new->completionstate != $current->completionstate) {
+            $current->completionstate = $new->completionstate;
+            $current->timemodified    = $new->timemodified;
             $this->internal_set_data($cm, $current);
         }
     }
@@ -596,19 +596,21 @@ class completion_info {
             $userid = $USER->id;
         }
 
+        $data = new StdClass;
+        $data->completionstate = COMPLETION_COMPLETE;
+        $data->timemodified    = time();
+
         // Check viewed
         if ($cm->completionview == COMPLETION_VIEW_REQUIRED &&
             $current->viewed == COMPLETION_NOT_VIEWED) {
-
-            return COMPLETION_INCOMPLETE;
+            $data->completionstate = COMPLETION_INCOMPLETE
+            return $data;
         }
 
         // Modname hopefully is provided in $cm but just in case it isn't, let's grab it
         if (!isset($cm->modname)) {
             $cm->modname = $DB->get_field('modules', 'name', array('id'=>$cm->module));
         }
-
-        $newstate = COMPLETION_COMPLETE;
 
         // Check grade
         if (!is_null($cm->completiongradeitemnumber)) {
@@ -621,15 +623,17 @@ class completion_info {
                 $grades = grade_grade::fetch_users_grades($item, array($userid), false);
                 if (empty($grades)) {
                     // No grade for user
-                    return COMPLETION_INCOMPLETE;
+                    $data->completionstate = COMPLETION_INCOMPLETE;
+                    return $data;
                 }
                 if (count($grades) > 1) {
                     $this->internal_systemerror("Unexpected result: multiple grades for
                         item '{$item->id}', user '{$userid}'");
                 }
-                $newstate = self::internal_get_grade_state($item, reset($grades));
-                if ($newstate == COMPLETION_INCOMPLETE) {
-                    return COMPLETION_INCOMPLETE;
+                $data->completionstate = self::internal_get_grade_state($item, reset($grades));
+                $data->timemodified = reset($grades)->timemodified;
+                if ($data->completionstate == COMPLETION_INCOMPLETE) {
+                    return $data;
                 }
 
             } else {
@@ -646,11 +650,12 @@ class completion_info {
                     {$cm->modname}_get_completion_state function");
             }
             if (!$function($this->course, $cm, $userid, COMPLETION_AND)) {
-                return COMPLETION_INCOMPLETE;
+                $data->completionstate = COMPLETION_INCOMPLETE;
+                return $data;
             }
         }
 
-        return $newstate;
+        return $data;
 
     }
 

@@ -103,9 +103,12 @@ class completion_criteria_completion extends data_object {
      *
      * This method creates a course_completion_crit_compl record
      */
-    public function mark_complete() {
+    public function mark_complete($timecompleted = null) {
         // Create record
-        $this->timecompleted = time();
+        if (!$timecompleted) {
+                $timecompleted = time();
+        }
+    $this->timecompleted = $timecompleted;
 
         // Save record
         if ($this->id) {
