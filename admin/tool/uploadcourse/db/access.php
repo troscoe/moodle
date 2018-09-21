@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Plugin version info.
+ * Defines the capabilities used by the user upload admin tool
  *
  * @package    tool_uploadcourse
  * @copyright  2011 Piers Harding
@@ -24,6 +24,15 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2018092100;            // The current plugin version (Date: YYYYMMDDXX).
-$plugin->requires  = 2017050500;            // Requires this Moodle version.
-$plugin->component = 'tool_uploadcourse';   // Full name of the plugin (used for diagnostics).
+$capabilities = array(
+
+    // Allows the user to upload courses.
+    'tool/uploadcourse:uploadcourses' => array(
+        'riskbitmask' => RISK_SPAM,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW
+        )
+    )
+);
